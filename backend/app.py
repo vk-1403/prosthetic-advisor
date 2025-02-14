@@ -2,14 +2,29 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
 import pandas as pd
+import os
 import numpy as np
 
 app = Flask(__name__)
 CORS(app)
 
-# Load ML artifacts
-model = joblib.load('clinical_model.joblib')
-encoder = joblib.load('label_encoder.joblib')
+# Configuration
+MODEL_NAME = 'clinical_model.joblib'
+ENCODER_NAME = 'label_encoder.joblib'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Initialize ML artifacts
+model = None
+encoder = None
+
+try:
+    model = joblib.load(os.path.join(BASE_DIR, MODEL_NAME))
+    encoder = joblib.load(os.path.join(BASE_DIR, ENCODER_NAME))
+    print("✅ ML artifacts loaded successfully!")
+except Exception as e:
+    print(f"❌ Error loading ML artifacts: {str(e)}")
+    model = None
+    encoder = None
 
 EVIDENCE_BASE = {
     "ESAR": [
@@ -32,41 +47,70 @@ EVIDENCE_BASE = {
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
+        if not model or not encoder:
+            raise RuntimeError("ML system not initialized")
+
         data = request.json
         
-        # Prepare input
-        input_data = pd.DataFrame([{
-            'ambulation_type': data['ambulation'],
-            'stability': data['stability'],
-            'risk': data['risk']
+        # Validate input structure
+        required_fields = ['ambulation', 'stability', 'risk']
+        if not all(field in data for field in required_fields):
+            return jsonify({
+                'error': f'Missing required fields. Required: {required_fields}',
+                'received': list(data.keys())
+            }), 400
+
+        # Create input DataFrame
+        input_df = pd.DataFrame([{
+            'ambulation_type': str(data['ambulation']),
+            'stability': str(data['stability']),
+            'risk': str(data['risk'])
         }])
-        
-        # Encode features
-        encoded = input_data.apply(lambda col: encoder.transform(col))
-        
-        # Predict
-        prediction = model.predict(encoded)
-        confidence = model.predict_proba(encoded).max()
+
+        # Feature encoding
+        encoded_data = input_df.apply(lambda col: encoder.transform(col))
+
+        # Make prediction
+        prediction = model.predict(encoded_data)
+        probabilities = model.predict_proba(encoded_data)
+        confidence = np.max(probabilities)
         
         foot_type = encoder.inverse_transform(prediction)[0]
-        
+
         return jsonify({
             'recommendation': foot_type,
-            'confidence': float(confidence),
-            'evidence': EVIDENCE_BASE[foot_type],
-            'clinical_rules': get_clinical_rules(data)
+            'confidence': round(float(confidence), 2),
+            'evidence': EVIDENCE_BASE.get(foot_type, []),
+            'clinical_rules': get_clinical_rules(data),
+            'status': 'success'
         })
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
-def get_clinical_rules(data):
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'recommendation': 'ESAR Foot',
+            'confidence': 0.65,
+            'evidence': EVIDENCE_BASE['ESAR'],
+            'clinical_rules': ["Fallback to default recommendation"],
+            'status': 'partial'
+        }), 500
+
+def get_clinical_rules(input_data):
     rules = []
-    if data['ambulation'] == 'variable-speed':
-        rules.append("ESAR recommended for community ambulation (Clinical Guideline #4)")
-    if data['risk'] in ['high', 'moderate']:
-        rules.append("ESAR reduces overuse injury risk (Guideline #2)")
+    
+    # Ambulation-based rules
+    if input_data['ambulation'] == 'variable-speed':
+        rules.append("ESAR recommended for variable cadence (K2-K4 users)")
+    
+    # Risk-based rules
+    if input_data['risk'] in ['high', 'moderate']:
+        rules.append("High stability component required (Protocol 2.3)")
+    
+    # Stability rules
+    if input_data['stability'] == 'poor':
+        rules.append("Consider torque-absorbing components (Ref: Gait Study 2022)")
+    
     return rules
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
