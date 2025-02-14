@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prosthetic Foot Advisor | AI Clinical Support</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Welcome Screen -->
+        <div class="welcome-screen" id="welcome">
+            <h1>Smart Prosthetic Advisor</h1>
+            <p>AI-Powered Clinical Decision Support System</p>
+            <p>ML-Driven Solutions • Adaptive Learning • Clinical Analytics</p>
+            <button class="btn start-btn" onclick="showDemographics()">
+                Start Assessment <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <!-- Demographic Form -->
+        <div class="assessment-card" id="demographics" style="display: none;">
+            <h2><i class="fas fa-user-circle"></i> Patient Details</h2>
+            <div class="demographic-form">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="patientName" required>
+                </div>
+                <div class="form-group">
+                    <label>Age</label>
+                    <input type="number" id="patientAge" min="18" max="100" required>
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="patientGender" required>
+                        <option value="">Select</option>
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Country</label>
+                    <input type="text" id="patientCountry" required>
+                </div>
+                <div class="form-group">
+                    <label>State/Region</label>
+                    <input type="text" id="patientState" required>
+                </div>
+                <div class="form-group">
+                    <label>Clinician Name</label>
+                    <input type="text" id="clinicianName" required>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="dataConsent" required>
+                        I consent to anonymous data collection
+                    </label>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="backToWelcome()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button class="btn btn-primary" onclick="startAssessment()">
+                    Continue <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Assessment Steps -->
+        <div class="assessment-card" id="step1" style="display: none;">
+            <h2><i class="fas fa-walking"></i> Ambulation Assessment</h2>
+            <div class="question-group">
+                <h3>Primary Walking Pattern</h3>
+                <div class="option-card" data-category="ambulation" data-value="single-speed">
+                    <h4>Single Speed/Limited Community</h4>
+                    <p>K2-level ambulators, household walkers</p>
+                </div>
+                <div class="option-card" data-category="ambulation" data-value="variable-speed">
+                    <h4>Variable Speed/Community Ambulation</h4>
+                    <p>K3/K4-level, uneven terrain navigation</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="previousStep()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+            </div>
+        </div>
+
+        <div class="assessment-card" id="step2" style="display: none;">
+            <h2><i class="fas fa-balance-scale"></i> Stability Assessment</h2>
+            <div class="question-group">
+                <h3>Knee Stability Status</h3>
+                <div class="option-card" data-category="stability" data-value="stable">
+                    <h4>Normal Knee Extension</h4>
+                    <p>Grade 4-5 quadriceps strength</p>
+                </div>
+                <div class="option-card" data-category="stability" data-value="moderate">
+                    <h4>Moderate Instability</h4>
+                    <p>Occasional knee buckling (1-2 episodes/week)</p>
+                </div>
+                <div class="option-card" data-category="stability" data-value="unstable">
+                    <h4>Severe Instability</h4>
+                    <p>Frequent knee giving way (>3 episodes/week)</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="previousStep()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+            </div>
+        </div>
+
+        <div class="assessment-card" id="step3" style="display: none;">
+            <h2><i class="fas fa-exclamation-triangle"></i> Risk Factors</h2>
+            <div class="question-group">
+                <h3>Overuse Injury Risk</h3>
+                <div class="option-card" data-category="risk" data-value="low">
+                    <h4>Low Risk</h4>
+                    <p>No comorbidities, BMI <30</p>
+                </div>
+                <div class="option-card" data-category="risk" data-value="moderate">
+                    <h4>Moderate Risk</h4>
+                    <p>Early OA signs, BMI 30-35</p>
+                </div>
+                <div class="option-card" data-category="risk" data-value="high">
+                    <h4>High Risk</h4>
+                    <p>Contralateral OA, BMI >35, spinal issues</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="previousStep()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+            </div>
+        </div>
+
+        <!-- Recommendation Panel -->
+        <div class="recommendation-panel" id="result" style="display: none;">
+            <h2><i class="fas fa-lightbulb"></i> Clinical Recommendation</h2>
+            <div id="recommendation-text"></div>
+            <div id="patient-summary" style="margin: 2rem 0;"></div>
+            <div id="evidence">
+                <h3><i class="fas fa-clipboard-check"></i> AI Confidence</h3>
+                <div id="confidence-meter"></div>
+                <h3 style="margin-top: 1.5rem;"><i class="fas fa-database"></i> Model Insights</h3>
+                <div id="model-version"></div>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn btn-primary" onclick="restartAssessment()">
+                    <i class="fas fa-redo"></i> New Assessment
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
