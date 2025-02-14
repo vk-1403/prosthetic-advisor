@@ -149,3 +149,22 @@ body {
     border-radius: 10px;
     transition: width 0.5s ease;
 }
+/* Add to styles.css */
+.evidence-section {
+  background: rgba(255,255,255,0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.guidelines {
+  border-left: 3px solid var(--secondary);
+  padding-left: 1rem;
+  margin: 1rem 0;
+}
+
+.error {
+  color: var(--accent);
+  border: 2px solid var(--accent);
+  padding: 1rem;
+}
