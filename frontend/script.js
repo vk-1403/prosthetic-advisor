@@ -2,7 +2,7 @@ let currentStep = 0;
 let responses = {};
 let demographics = {};
 const totalSteps = 5; // Welcome + Demographics + 3 assessment steps
-const API_URL = "https://your-render-service.onrender.com"; // Replace with your Render URL
+const API_URL = "https://prosthetic-advisor.onrender.com"; // Render URL
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
